@@ -1,0 +1,26 @@
+[experimento]
+nombre      = "piloto-mig-vllm-qwen3-0.6b"
+descripcion = "Piloto vLLM en trozo MIG; referencia: piloto-mig-0.6b-20261027-155013 (fase 2)"
+
+[servidor]
+backend = "vllm"
+url     = "http://127.0.0.1:8100"      # nunca el 8000: lo ocupa cedia-small en compute-0-0
+modelo  = "Qwen/Qwen3-0.6B"
+gpu_esperada = "MIG 1g.5gb"
+
+[carga]
+entradas      = [128, 512, 1024]
+salidas       = [128]
+concurrencias = [1]
+repeticiones  = 10
+calentamiento = 2
+modo          = "cerrado"
+semilla       = 1234
+temperatura   = 0.0
+
+[telemetria]
+activar      = true
+intervalo_ms = 500
+
+[salida]
+dir = "resultados"

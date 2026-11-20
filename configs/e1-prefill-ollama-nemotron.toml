@@ -1,0 +1,30 @@
+[experimento]
+nombre      = "e1-prefill-ollama-nemotron"
+descripcion = "Barrido de longitud de entrada, salida fija, concurrencia 1"
+
+[servidor]
+backend = "ollama"                 # "vllm" | "ollama"
+url     = "http://127.0.0.1:11434"
+modelo  = "nemotron-3-nano:30b"
+gpu_esperada = "A100-40GB"
+
+[servidor.opciones_ollama]
+num_ctx    = 8192
+keep_alive = "30m"
+
+[carga]
+entradas      = [128, 512, 2048, 4096]   # tokens de entrada
+salidas       = [128]                    # tokens de salida
+concurrencias = [1]
+repeticiones  = 10
+calentamiento = 2
+modo          = "cerrado"                # "cerrado" (N concurrentes fijos) | "poisson" (tasa)
+semilla       = 1234
+temperatura   = 0.0
+
+[telemetria]
+activar      = true
+intervalo_ms = 500
+
+[salida]
+dir = "resultados"                 # se crea resultados/<nombre>-<AAAAMMDD-HHMMSS>/

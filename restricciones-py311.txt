@@ -1,0 +1,4 @@
+# El clúster usa Python 3.11 (module load python/3.11). pip-compile resuelve con el Python local, que
+# puede ser más nuevo: estas cotas evitan fijar versiones que exigen Python >= 3.12.
+numpy<2.5
+contourpy<1.4
