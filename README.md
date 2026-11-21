@@ -4,7 +4,7 @@ Mide el rendimiento de inferencia de LLM servidos con vLLM y Ollama en la A100 d
 en JSON. El diseño completo está en [DESARROLLO.md](DESARROLLO.md) y el plan por fases en
 [docs/fases/](docs/fases/README.md).
 
-Estado: **fase 1 (Ollama secuencial)**: `entorno`, `comprobar`, `medir` y `resumir`. Concurrencia,
+Estado: **fase 1 (Ollama secuencial)**: `entorno`, `comprobar`, `medir`, `resumir` y `comparar`. Concurrencia,
 vLLM, telemetría y gráficas llegan en las fases siguientes (§10). Se desarrolla y se ejecuta en el
 clúster de CEDIA.
 
@@ -29,6 +29,7 @@ medidor entorno -c configs/v1-validacion-36268.toml    # además valida la confi
 medidor comprobar -c configs/v1-validacion-36268.toml  # guardias G1–G3, G5–G8 (con sondeos), sin medir
 medidor medir     -c configs/v1-validacion-36268.toml  # guardias + tanda + resumen
 medidor resumir   resultados/<nombre>-<fecha>          # regenera el resumen (sin sobrescribir)
+medidor comparar  resultados/<nombre>-<fecha> --referencia <resumen.json>   # ±5 % frente a medir_ollama.py
 ```
 
 Se ejecuta **en el nodo GPU** (modo A, §3.1): las guardias G2 y G3 leen `nvidia-smi` y el log de

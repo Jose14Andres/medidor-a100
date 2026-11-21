@@ -13,12 +13,15 @@ import sys
 from datetime import datetime
 from pathlib import Path
 
-from medidor import __version__, config
+from medidor import __version__, comparar, config
 from medidor.esquema import ESQUEMA, escribir_json
 from medidor.tanda import (DEPENDENCIAS, SALIDA_CONFIG, SALIDA_GUARDIA, SALIDA_OK, SALIDA_PARCIAL,
                            ejecutar, resumen_desde_datos, version_paquete)
 
-__all__ = ["SALIDA_OK", "SALIDA_GUARDIA", "SALIDA_CONFIG", "SALIDA_PARCIAL", "main", "construir_parser"]
+SALIDA_NO_PASA = 1   # `comparar`: algún punto fuera de ±5 % o sin pareja
+
+__all__ = ["SALIDA_OK", "SALIDA_GUARDIA", "SALIDA_CONFIG", "SALIDA_PARCIAL", "SALIDA_NO_PASA", "main",
+           "construir_parser"]
 
 
 def _orden_entorno(args: argparse.Namespace) -> int:
@@ -118,6 +121,18 @@ def _orden_resumir(args: argparse.Namespace) -> int:
     return SALIDA_OK
 
 
+def _orden_comparar(args: argparse.Namespace) -> int:
+    """Compara una tanda con el resumen de medir_ollama.py: 0 si todo pasa (±5 %), 1 si no."""
+    try:
+        res, destino = comparar.ejecutar(args.dir, args.referencia)
+    except comparar.ErrorComparar as e:
+        print(e, file=sys.stderr)
+        return SALIDA_CONFIG
+    print(comparar.tabla(res))
+    print(f"comparación escrita en {destino}")
+    return SALIDA_OK if res["pasa"] else SALIDA_NO_PASA
+
+
 def construir_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="medidor", description=__doc__.splitlines()[0])
     parser.add_argument("--version", action="version", version=f"medidor {__version__}")
@@ -140,6 +155,11 @@ def construir_parser() -> argparse.ArgumentParser:
     p = sub.add_parser("resumir", help="regenera el resumen desde datos.json (sin sobrescribir)")
     p.add_argument("dir", type=Path, help="carpeta de una tanda (resultados/<nombre>-<fecha>)")
     p.set_defaults(func=_orden_resumir)
+
+    p = sub.add_parser("comparar", help="compara una tanda con el resumen.json de medir_ollama.py (±5 %%)")
+    p.add_argument("dir", type=Path, help="carpeta de una tanda (resultados/<nombre>-<fecha>)")
+    p.add_argument("--referencia", type=Path, required=True, help="resumen.json de medir_ollama.py")
+    p.set_defaults(func=_orden_comparar)
 
     return parser
 

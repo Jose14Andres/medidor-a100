@@ -1,7 +1,8 @@
 # Fase 1: Ollama secuencial
 
-**Estado (20-nov-2026):** código terminado, con 81 tests en verde en compute-0-1. **Falta**: el
-comparador (1.1, desde el PC) y la validación real en la A100 (1.2, en el clúster).
+**Estado (20-nov-2026):** código terminado, con 81 tests en verde en compute-0-1 y en Windows. El
+comparador (1.1) está hecho en el PC (95 tests en verde). **Falta**: la validación real en la A100
+(1.2, en el clúster).
 
 **Criterio de aceptación (DESARROLLO.md §10):** con nemotron-3-nano:30b, prefill y decode tok/s del
 servidor dentro de **±5 %** de la tanda del job 36268 de `medir_ollama.py`, punto a punto.
@@ -19,7 +20,8 @@ servidor dentro de **±5 %** de la tanda del job 36268 de `medir_ollama.py`, pun
 | `src/medidor/conexion.py` | `nvidia-smi` (memoria, `-L`), loadavg, job de Slurm |
 | `src/medidor/resumen.py` | n, media, desv, mín, p50/p90/p95/p99, máx por punto; cuenta errores, salidas cortas y entradas fuera de tolerancia |
 | `src/medidor/tanda.py` | orden de guardias, carga del modelo, calibración, tanda secuencial, escritura de resultados |
-| `src/medidor/cli.py` | `entorno`, `comprobar`, `medir`, `resumir` |
+| `src/medidor/cli.py` | `entorno`, `comprobar`, `medir`, `resumir`, `comparar` |
+| `src/medidor/comparar.py` | tarea 1.1: compara con el `resumen.json` de `medir_ollama.py` (ver abajo) |
 | `configs/v1-validacion-36268.toml` | la tanda de validación |
 | `tests/test_{prompts,backend_ollama,guardias,resumen,tanda}.py` | 81 tests en total |
 
@@ -46,7 +48,12 @@ servidor dentro de **±5 %** de la tanda del job 36268 de `medir_ollama.py`, pun
 
 ---
 
-## 1.1 Pendiente en el PC: comparador con la referencia
+## 1.1 Hecho en el PC: comparador con la referencia
+
+Hecho el 20-nov-2026 (`src/medidor/comparar.py`, `tests/test_comparar.py`). Decisiones: el
+emparejamiento es uno a uno (dos puntos de la referencia no comparten pareja); un punto de la
+referencia sin pareja o una métrica sin valor es NO PASA; ±2 % en tokens solo avisa; el borde de ±5 %
+es inclusivo. Salida: 0 pasa, 1 no pasa, 2 entrada ilegible o con otro formato.
 
 Hace falta una herramienta que diga "pasa / no pasa" sin hacer cuentas a mano.
 
