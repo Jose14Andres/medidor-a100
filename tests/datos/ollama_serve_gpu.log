@@ -1,0 +1,5 @@
+time=2026-11-16T18:58:06.861-05:00 level=INFO source=routes.go:1864 msg="Listening on 127.0.0.1:11434 (version 0.24.0)"
+time=2026-11-16T18:58:06.965-05:00 level=INFO source=runner.go:67 msg="discovering available GPUs..."
+time=2026-11-16T18:58:40.060-05:00 level=INFO source=types.go:42 msg="inference compute" id=GPU-c15551eb-ed01-577d-cfcc-47629e6fff31 filter_id="" library=CUDA compute=8.0 name=CUDA0 description="NVIDIA A100-SXM4-40GB" libdirs=ollama,cuda_v12 driver=12.8 pci_id=0000:47:00.0 type=discrete total="40.0 GiB" available="39.4 GiB"
+time=2026-11-16T18:59:11.454-05:00 level=INFO source=ggml.go:502 msg="offloaded 53/53 layers to GPU"
+time=2026-11-16T19:01:50.719-05:00 level=INFO source=server.go:1432 msg="llama runner started in 174.91 seconds"

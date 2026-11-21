@@ -30,6 +30,7 @@ class Experimento:
 class OpcionesOllama:
     num_ctx: int
     keep_alive: str
+    log: str          # log de `ollama serve` que lee la guardia G3; admite {job} (SLURM_JOB_ID) y ~
 
 
 @dataclass(frozen=True)
@@ -38,6 +39,7 @@ class Servidor:
     url: str
     modelo: str
     gpu_esperada: str | None
+    timeout_s: float  # tiempo máximo sin recibir datos de una solicitud (§6); incluye la carga del modelo
     opciones_ollama: OpcionesOllama | None
 
 
@@ -159,23 +161,30 @@ def desde_dict(datos: dict[str, Any]) -> Config:
         "url": (str, _OBLIGATORIA),
         "modelo": (str, _OBLIGATORIA),
         "gpu_esperada": (str, None),
+        "timeout_s": (float, 900.0),
     }, subtablas=("opciones_ollama",))
     if srv["backend"] not in BACKENDS:
         raise ErrorConfig(f"servidor.backend: {srv['backend']!r} no es uno de {BACKENDS}")
     _validar_url(srv["url"])
+    if srv["timeout_s"] <= 0:
+        raise ErrorConfig("servidor.timeout_s: debe ser > 0")
 
     opciones = None
     tabla_ollama = datos["servidor"].get("opciones_ollama")
     if srv["backend"] == "ollama":
         # §2: sin num_ctx Ollama trunca el prompt en silencio; sin keep_alive descarga el modelo.
         if tabla_ollama is None:
-            raise ErrorConfig("[servidor.opciones_ollama]: obligatoria con backend = \"ollama\" (num_ctx, keep_alive)")
+            raise ErrorConfig(
+                "[servidor.opciones_ollama]: obligatoria con backend = \"ollama\" (num_ctx, keep_alive, log)")
         o = _leer_tabla(tabla_ollama, "servidor.opciones_ollama", {
             "num_ctx": (int, _OBLIGATORIA),
             "keep_alive": (str, _OBLIGATORIA),
+            "log": (str, _OBLIGATORIA),
         })
         if o["num_ctx"] <= 0:
             raise ErrorConfig("servidor.opciones_ollama.num_ctx: debe ser > 0")
+        if not o["log"].strip():
+            raise ErrorConfig("servidor.opciones_ollama.log: no puede estar vacío (lo necesita la guardia G3)")
         opciones = OpcionesOllama(**o)
     elif tabla_ollama is not None:
         raise ErrorConfig("[servidor.opciones_ollama]: solo válida con backend = \"ollama\"")

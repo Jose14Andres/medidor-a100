@@ -14,7 +14,7 @@ BASE = {
         "backend": "ollama",
         "url": "http://127.0.0.1:11434",
         "modelo": "nemotron-3-nano:30b",
-        "opciones_ollama": {"num_ctx": 8192, "keep_alive": "30m"},
+        "opciones_ollama": {"num_ctx": 8192, "keep_alive": "30m", "log": "/home/x/ollama.log"},
     },
     "carga": {"entradas": [128, 512], "salidas": [128], "repeticiones": 3, "semilla": 1},
 }
@@ -47,7 +47,8 @@ def test_defectos():
     assert cfg.carga.modo == "cerrado"
     assert cfg.telemetria.activar is True and cfg.telemetria.intervalo_ms == 500
     assert cfg.salida.dir == "resultados"
-    assert cfg.servidor.opciones_ollama == config.OpcionesOllama(num_ctx=8192, keep_alive="30m")
+    assert cfg.servidor.timeout_s == 900.0
+    assert cfg.servidor.opciones_ollama == config.OpcionesOllama(num_ctx=8192, keep_alive="30m", log="/home/x/ollama.log")
 
 
 @pytest.mark.parametrize("cambios, mensaje", [
@@ -66,6 +67,9 @@ def test_defectos():
     ({"servidor__url": "http://localhost:8000"}, "cedia-small"),
     ({"servidor__opciones_ollama": None}, "obligatoria con backend"),
     ({"servidor__opciones_ollama__keep_alive": None}, "keep_alive: falta"),
+    ({"servidor__opciones_ollama__log": None}, "log: falta"),
+    ({"servidor__opciones_ollama__log": " "}, "lo necesita la guardia G3"),
+    ({"servidor__timeout_s": 0}, "timeout_s: debe ser > 0"),
     ({"servidor__backend": "vllm"}, "solo válida con backend"),
     ({"carga__modo": "poisson"}, "tasa_rps: obligatoria"),
     ({"carga__tasa_rps": 2.0}, "solo válida con modo"),

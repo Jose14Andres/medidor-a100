@@ -3,7 +3,7 @@
 Sirve en el mismo puerto las rutas de ambos backends:
 
 - vLLM:   GET /health, GET /v1/models, POST /v1/completions (stream SSE)
-- Ollama: GET /api/version, /api/tags, /api/ps, POST /api/generate (stream NDJSON)
+- Ollama: GET /api/version, /api/tags, /api/ps, POST /api/show, POST /api/generate (stream NDJSON)
 
 Tokenizador falso: un token = una palabra separada por espacios. Cada fragmento de salida es un
 token ("tok "), salvo que se configure `tokens_por_fragmento` > 1.
@@ -36,6 +36,9 @@ class Ajustes:
     max_model_len: int = 4096       # vLLM: /v1/models
     num_ctx_defecto: int = 2048     # Ollama: si la solicitud no fija num_ctx
     size_vram: int = 20 * 1024**3   # Ollama /api/ps; 0 simula "cayó a CPU"
+    size: int | None = None         # Ollama /api/ps; None = igual que size_vram (todo en GPU)
+    contexto_modelo: int = 131072   # Ollama /api/show: <familia>.context_length
+    fallar_con_num_predict: int | None = None  # Ollama: HTTP 500 si la solicitud pide ese num_predict
     load_duration_s: float = 0.0
     version_ollama: str = "0.24.0"
 
@@ -104,7 +107,9 @@ class _Manejador(BaseHTTPRequestHandler):
         elif self.path == "/api/tags":
             self._json(200, {"models": [{"name": a.modelo, "model": a.modelo}]})
         elif self.path == "/api/ps":
-            self._json(200, {"models": [{"name": a.modelo, "model": a.modelo, "size_vram": a.size_vram}]})
+            size = a.size_vram if a.size is None else a.size
+            self._json(200, {"models": [{"name": a.modelo, "model": a.modelo, "size": size,
+                                         "size_vram": a.size_vram}]})
         else:
             self._json(404, {"error": f"ruta desconocida: {self.path}"})
 
@@ -116,6 +121,12 @@ class _Manejador(BaseHTTPRequestHandler):
             self._completions(cuerpo)
         elif self.path == "/api/generate":
             self._generate(cuerpo)
+        elif self.path == "/api/show":
+            if cuerpo.get("model") != self.ajustes.modelo:
+                self._json(404, {"error": f"model '{cuerpo.get('model')}' not found"})
+            else:
+                self._json(200, {"details": {"family": "falsa", "quantization_level": "Q4_K_M"},
+                                 "model_info": {"falsa.context_length": self.ajustes.contexto_modelo}})
         else:
             self._json(404, {"error": f"ruta desconocida: {self.path}"})
 
@@ -160,6 +171,9 @@ class _Manejador(BaseHTTPRequestHandler):
         # Como Ollama 0.24: si el prompt no cabe en num_ctx, se trunca en silencio.
         n_entrada = min(_contar_tokens(cuerpo.get("prompt", "")), num_ctx)
         n_salida = int(opciones.get("num_predict", 16))
+        if a.fallar_con_num_predict is not None and n_salida == a.fallar_con_num_predict:
+            self._json(500, {"error": "fallo simulado del servidor falso"})
+            return
         trozos = _fragmentos(n_salida, a.tokens_por_fragmento)
 
         if cuerpo.get("stream", True) is False:

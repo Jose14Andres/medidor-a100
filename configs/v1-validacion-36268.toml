@@ -1,0 +1,39 @@
+# Validación de la fase 1 (DESARROLLO.md §10): repite la tanda del job 36268 (16-nov-2026) de
+# ollama/medir_ollama.py con el medidor nuevo. Referencia:
+#   ~/tfg-jose-ureta/ollama/resultados/nemotron-3-nano_30b-20261116-185849/resumen.json
+# Aquella tanda pedía 128/512/2048 *palabras*, que dieron 170/614,8/2389,8 tokens (prompt_eval_count medio).
+# Aquí se piden esos tokens directamente (calibración por sondeo, §12.1). Criterio: prefill y decode
+# tok/s del servidor dentro de ±5 % punto a punto.
+
+[experimento]
+nombre      = "v1-validacion-36268"
+descripcion = "Fase 1: reproducir el job 36268 (nemotron-3-nano:30b, raw, salida 128, 5 reps + 1 calentamiento)"
+
+[servidor]
+backend      = "ollama"
+url          = "http://127.0.0.1:11434"
+modelo       = "nemotron-3-nano:30b"
+gpu_esperada = "A100-40GB"
+timeout_s    = 900                 # el mismo que usó medir_ollama.py
+
+[servidor.opciones_ollama]
+num_ctx    = 8192                  # el mismo que el 36268
+keep_alive = "30m"
+log        = "~/tfg-jose-ureta/ollama/logs/ollama_serve_{job}.log"
+
+[carga]
+entradas      = [170, 615, 2390]
+salidas       = [128]
+concurrencias = [1]
+repeticiones  = 5
+calentamiento = 1
+modo          = "cerrado"
+semilla       = 1234
+temperatura   = 0.0
+
+[telemetria]
+activar      = false               # llega en la fase 3
+intervalo_ms = 500
+
+[salida]
+dir = "resultados"

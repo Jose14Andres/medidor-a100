@@ -7,10 +7,12 @@ backend = "ollama"                 # "vllm" | "ollama"
 url     = "http://127.0.0.1:11434"
 modelo  = "nemotron-3-nano:30b"
 gpu_esperada = "A100-40GB"
+timeout_s = 900                    # sin datos durante 900 s = error (la carga del modelo tardó 181 s el 16-nov)
 
 [servidor.opciones_ollama]
 num_ctx    = 8192
 keep_alive = "30m"
+log        = "~/tfg-jose-ureta/ollama/logs/ollama_serve_{job}.log"   # guardia G3; {job} = SLURM_JOB_ID
 
 [carga]
 entradas      = [128, 512, 2048, 4096]   # tokens de entrada

@@ -1,0 +1,6 @@
+time=2026-11-17T08:09:06.885-05:00 level=INFO source=routes.go:1864 msg="Listening on 127.0.0.1:11434 (version 0.24.0)"
+time=2026-11-17T08:09:06.891-05:00 level=INFO source=runner.go:67 msg="discovering available GPUs..."
+time=2026-11-17T08:09:36.894-05:00 level=INFO source=runner.go:462 msg="failure during GPU discovery" OLLAMA_LIBRARY_PATH="[/home/usuario/ollama/lib/ollama /home/usuario/ollama/lib/ollama/cuda_v12]" extra_envs=map[] error="failed to finish discovery before timeout" detail=""
+time=2026-11-17T08:09:56.506-05:00 level=INFO source=types.go:60 msg="inference compute" id=cpu library=cpu compute="" name=cpu description=cpu libdirs=ollama driver="" pci_id="" type="" total="1007.7 GiB" available="858.4 GiB"
+time=2026-11-17T08:15:34.742-05:00 level=INFO source=ggml.go:502 msg="offloaded 0/49 layers to GPU"
+time=2026-11-17T08:18:22.060-05:00 level=INFO source=server.go:1432 msg="llama runner started in 180.21 seconds"

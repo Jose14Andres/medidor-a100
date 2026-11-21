@@ -4,9 +4,10 @@ Herramienta pequeña para conectarse al nodo con la A100 (HPC de CEDIA) y medir 
 inferencia de LLM servidos con **vLLM** y con **Ollama**, con salida siempre en **JSON** para las
 gráficas de la tesis.
 
-- Estado: diseño inicial, sin código.
-- Fecha: 19-nov-2026.
-- Carpeta: `~/tfg-jose-ureta/medidor-a100/`.
+- Estado: fase 0 cerrada (20-nov-2026, 41 tests en verde en compute-0-1); fase 1 en desarrollo.
+- Fecha: 19-nov-2026 (diseño); 20-nov-2026 (decisiones §12.1–2 y fase 1).
+- Repositorio: <https://github.com/Jose14Andres/medidor-a100>, clonado y desarrollado en el clúster
+  (`~/medidor-a100`, nodo de cómputo con `module load python/3.11` o el py311 de miniconda).
 
 ---
 
@@ -321,15 +322,43 @@ investiga antes de seguir.
 
 ---
 
-## 12. Decisiones abiertas
+## 12. Decisiones
 
-1. **Prompts para Ollama**: Ollama 0.24 no expone un endpoint de tokenización. Propuesta: construir
-   el prompt con el tokenizer de Hugging Face del mismo modelo si está en `hf-cache` y, si no,
-   calibrar con una solicitud de sondeo usando `prompt_eval_count`. Hay que elegir una de las dos.
-2. **Plantilla de chat**: medir con `/api/generate` + `raw: true` (sin plantilla, comparable con
-   `/v1/completions` de vLLM) o con plantilla de chat. Propuesta: `raw` para la tesis, chat solo en `medidor chat`.
-3. **Telemetría en MIG**: en un trozo MIG, `nvidia-smi` no da % de uso por instancia. ¿Basta con
+Tomadas el 20-nov-2026:
+
+1. **Prompts para Ollama → calibración por sondeo.** No hay tokenizer de nemotron en `hf-cache` y
+   habría que bajar uno por modelo. `prompts.calibrar` lanza sondeos (`num_predict = 1`), lee
+   `prompt_eval_count` y ajusta el número de palabras (modelo lineal tokens ≈ a + b·palabras, como
+   mucho 8 sondeos) hasta quedar a ≤ 1 token del objetivo y dentro de ±2 %. G7 falla si no lo consigue.
+   Cada solicitud guarda `tokens_entrada` (reales) y `tokens_entrada_pedidos`; si se salen de ±2 %, se
+   marca `entrada_fuera_tolerancia` y el resumen lo cuenta.
+2. **Plantilla → `raw` para la tesis** (`/api/generate` con `raw: true`, comparable con
+   `/v1/completions` de vLLM y con el job 36268). La plantilla de chat queda para `medidor chat`.
+3. **Validación de la fase 1 → config propia** `configs/v1-validacion-36268.toml`: entradas
+   170/615/2390 tokens (lo que dieron las 128/512/2048 palabras del 36268), salida 128, 5 repeticiones
+   y 1 de calentamiento, `num_ctx` 8192.
+
+Detalles de implementación de la fase 1 que fijan comportamiento:
+
+- Orden de guardias: G8 → G6 → G1 → G5 → carga del modelo → G3 → G2 → G7. La carga ("Hola",
+  1 token) se cronometra aparte y queda en `entorno.json` (`carga_modelo`).
+- G3 lee el log de `ollama serve` desde su último `Listening on`: exige `inference compute` con
+  `library=CUDA` y `offloaded N/N layers`, y en `/api/ps` `size_vram > 0` e igual a `size`. Ruta en
+  `servidor.opciones_ollama.log`, con `{job}` = `SLURM_JOB_ID`.
+- G8 exige que la salida esté bajo `/home` (`guardias.RAICES_PERMITIDAS`).
+- `servidor.timeout_s` (900 s por defecto) es el tiempo máximo **sin recibir datos**, no el total;
+  incluye la carga del modelo (181 s el 16-nov). Va en `entorno.json` junto a los demás tiempos de espera.
+- Tras 3 solicitudes seguidas con error, la tanda para sin reintentar (código 3). Si no, un servidor
+  colgado costaría 900 s por cada solicitud que queda.
+- `datos.jsonl` se escribe solicitud a solicitud; `datos.json`, `resumen.json` y `entorno.json` se
+  escriben al final, también si falla una guardia o se interrumpe la tanda (con `estado`).
+- Las funciones de consulta de la interfaz `Backend` son `async` (§3.3), porque la fase 4
+  (concurrencia) reutiliza el mismo cliente.
+
+Abiertas:
+
+4. **Telemetría en MIG**: en un trozo MIG, `nvidia-smi` no da % de uso por instancia. ¿Basta con
    la memoria, o se intenta DCGM (si está instalado en el nodo)?
-4. **Python del cliente**: 3.11 (como tfgbench) frente a solo biblioteca estándar 3.8 (como
-   `medir_ollama.py`, que corre en cualquier sitio). Propuesta: 3.11 con dependencias mínimas.
-5. **Interfaz**: solo CLI, o añadir más adelante una TUI (p. ej. `textual`) para ver la tanda en vivo.
+5. **Python del cliente**: 3.11 (como tfgbench) frente a solo biblioteca estándar 3.8 (como
+   `medir_ollama.py`, que corre en cualquier sitio). De hecho se usa 3.11 con dependencias mínimas.
+6. **Interfaz**: solo CLI, o añadir más adelante una TUI (p. ej. `textual`) para ver la tanda en vivo.
