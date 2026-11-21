@@ -31,16 +31,16 @@ timeout_s = 10
 [servidor.opciones_ollama]
 num_ctx = 4096
 keep_alive = "30m"
-log = "{log}"
+log = "{log.as_posix()}"
 [carga]
 {chr(10).join(f"{k} = {v}" for k, v in car.items())}
 semilla = 1
 [salida]
-dir = "{tmp_path / 'resultados'}"
+dir = "{(tmp_path / 'resultados').as_posix()}"
 '''
     if backend != "ollama":
         texto = texto.replace("[servidor.opciones_ollama]\nnum_ctx = 4096\nkeep_alive = \"30m\"\n"
-                              f"log = \"{log}\"\n", "")
+                              f"log = \"{log.as_posix()}\"\n", "")
     ruta = tmp_path / "x.toml"
     ruta.write_text(texto, encoding="utf-8")
     return ruta

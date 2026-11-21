@@ -66,7 +66,8 @@ def g6_contexto(contexto: int, entradas: Sequence[int], salidas: Sequence[int],
 
 def g8_directorio(ruta: Path) -> ResultadoGuardia:
     real = ruta.expanduser().resolve()
-    if not any(real == r or r in real.parents for r in RAICES_PERMITIDAS):
+    raices = [r.expanduser().resolve() for r in RAICES_PERMITIDAS]   # en Windows /home → C:\home
+    if not any(real == r or r in real.parents for r in raices):
         return ResultadoGuardia("G8", False, f"el directorio de salida {real} no está en "
                                 f"{', '.join(map(str, RAICES_PERMITIDAS))} (/scratch se borra al acabar el job)",
                                 {"ruta": str(real)})

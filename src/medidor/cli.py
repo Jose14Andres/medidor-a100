@@ -145,5 +145,9 @@ def construir_parser() -> argparse.ArgumentParser:
 
 
 def main(argv: list[str] | None = None) -> int:
+    # En Windows, con la salida redirigida a un fichero, la codificación es cp1252 y no tiene → ni ≥.
+    for flujo in (sys.stdout, sys.stderr):
+        if hasattr(flujo, "reconfigure"):
+            flujo.reconfigure(errors="backslashreplace")
     args = construir_parser().parse_args(argv)
     return args.func(args)

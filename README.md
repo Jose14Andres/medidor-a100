@@ -1,7 +1,8 @@
 # medidor-a100
 
 Mide el rendimiento de inferencia de LLM servidos con vLLM y Ollama en la A100 de CEDIA, con salida
-en JSON. El diseño completo está en [DESARROLLO.md](DESARROLLO.md).
+en JSON. El diseño completo está en [DESARROLLO.md](DESARROLLO.md) y el plan por fases en
+[docs/fases/](docs/fases/README.md).
 
 Estado: **fase 1 (Ollama secuencial)**: `entorno`, `comprobar`, `medir` y `resumir`. Concurrencia,
 vLLM, telemetría y gráficas llegan en las fases siguientes (§10). Se desarrolla y se ejecuta en el

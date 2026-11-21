@@ -298,11 +298,16 @@ Cada fase termina con algo ejecutable y verificado. Se aprueban una a una.
 |---|---|---|
 | **0. Esqueleto** | `pyproject`, venv, `medidor entorno`, servidor falso, CI local con pytest | `pytest` verde sin red ni GPU |
 | **1. Ollama secuencial** | backend Ollama + guardias G1–G3, G5–G8 + `datos.json`/`resumen.json` | con nemotron-3-nano:30b, los números de prefill/decode coinciden (±5 %) con la tanda del job 36268 de `medir_ollama.py` |
-| **2. vLLM secuencial** | backend vLLM reutilizando tfgbench | piloto Qwen3-0.6B en MIG reproduce `piloto-mig-0.6b-20261027-155013` (±5 %) |
+| **2. vLLM secuencial** | backend vLLM reutilizando tfgbench | piloto Qwen3-0.6B en MIG reproduce las filas c=1 de `piloto-mig-0.6b-20261027-155013` (±5 %) |
 | **3. Telemetría GPU** | muestreo `nvidia-smi` alineado por marcas UTC | `telemetria.json` cubre toda la tanda; memoria > 0 durante las solicitudes |
-| **4. Concurrencia** | modos cerrado y Poisson, throughput agregado | con el servidor falso, throughput medido = teórico (±2 %) |
-| **5. Gráficas y exportación** | `graficas`, `exportar` (zip en `$HOME`) | las 7 gráficas salen en PNG y PDF desde una tanda real |
-| **6. Chat y comparativas** | `medidor chat`, gráficas entre tandas | sustituye a `chat_stream.py` |
+| **4. Vista en tiempo real** | `medidor panel` (web por túnel SSH, solo lee ficheros); opcional `medidor proxy` | solicitudes en el panel ≤ 2 s; con panel abierto TTFT p50 ±2 % |
+| **5. Concurrencia** | modos cerrado y Poisson, throughput agregado | con el servidor falso, throughput medido = teórico (±2 %); filas c=4 del piloto (±5 %) |
+| **6. Gráficas y exportación** | `graficas`, `exportar` (zip en `$HOME`) | las 7 gráficas salen en PNG y PDF desde una tanda real |
+| **7. Chat y comparativas** | `medidor chat`, gráficas entre tandas | sustituye a `chat_stream.py` |
+
+El 20-nov-2026 la vista en tiempo real (antes no estaba en el plan) pasó a la fase 4, por delante de
+la concurrencia: es el objetivo de uso de la herramienta. El detalle de cada fase está en
+[`docs/fases/`](docs/fases/README.md).
 
 Las fases 1 y 2 validan la herramienta nueva contra datos ya medidos: si no coinciden, se para y se
 investiga antes de seguir.

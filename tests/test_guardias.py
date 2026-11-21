@@ -38,7 +38,7 @@ def test_log_solo_cuenta_el_ultimo_arranque():
 # --- G3 ----------------------------------------------------------------------------------------
 
 def _g3(aj, log):
-    return _con_backend(aj, lambda be: guardias.g3_ollama_gpu(be, aj.modelo, str(log)))
+    return _con_backend(aj, lambda be: guardias.g3_ollama_gpu(be, aj.modelo, Path(log).as_posix()))
 
 
 def test_g3_ok_con_log_gpu():
